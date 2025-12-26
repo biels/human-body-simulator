@@ -2,6 +2,8 @@
 
 A taxonomy of all entities in the simulation and how they relate.
 
+> **See also:** [specs/00_ARCHITECTURE.md](specs/00_ARCHITECTURE.md) for tick cycle, [specs/06_ZONES.md](specs/06_ZONES.md) for physical compartments
+
 ---
 
 ## Overview: The Five Kinds of Things
@@ -21,8 +23,8 @@ A taxonomy of all entities in the simulation and how they relate.
 │                                                                          │
 │   Activities either:                                                     │
 │   • Change ENVIRONMENT (go_outside → light ↑)                           │
-│   • Move resources across boundary (eat → food enters body)             │
-│   • Trigger internal processes (exercise → metabolic demand)            │
+│   • Add mass to ZONES (eat → food enters lumen)                         │
+│   • Trigger internal processes (exercise → muscle ATP demand ↑)         │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │
                                  ▼
@@ -65,7 +67,7 @@ A taxonomy of all entities in the simulation and how they relate.
 │   These answer: "How do I feel?"                                        │
 │                                                                          │
 │   • Androgenic      = Testosterone pathway (drive, libido, confidence)  │
-│   • Dopaminergic    = Dopamine baseline (content vs seeking)            │
+│   • Dopaminergic    = Dopamine × density × sensitivity / reuptake      │
 │   • Metabolic       = Keto vs Glycolytic (hunger, clarity, stability)   │
 │   • Adenosinergic   = Sleep pressure (alert vs sleepy)                  │
 │   • Autonomic       = Symp/Para balance (stressed vs calm)              │
@@ -75,7 +77,7 @@ A taxonomy of all entities in the simulation and how they relate.
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Key Insight:** The user NEVER sets internal variables directly. You can't "set" your dopamine—you must do an activity that triggers it. Axes are READ-ONLY views calculated from state.
+**Key Insight:** The user NEVER sets internal variables directly. You can't "set" your dopamine—you must do an activity that triggers it. Axes are READ-ONLY views derived from zone states. Effects EMERGE from physics (blood routing, mass flow) rather than rules.
 
 ---
 
@@ -400,17 +402,20 @@ Result: Better cold tolerance, elevated mood for hours
 |----------|------------|----------|
 | **Environment** | External context | Light, temperature, altitude, social |
 | **Activities** | Agent actions | Eat, exercise, sleep, go outside |
-| **Systems** | Internal machinery | Metabolic, Hormonal, Renal |
-| **Variables** | Measurable state | bloodGlucose, cortisol, heartRate |
-| **Transitions** | State changes | High carb → ↑insulin → ↓ketones |
+| **Physical Zones** | Mass compartments | Lumen, Vascular, Hepatic, Myo, Cortex, Renal |
+| **Systems** | Internal machinery | Circadian, Hormonal, Homeostatic loops |
+| **Valves** | Hormone-controlled gates | Insulin, Glucagon, Aldosterone, ADH |
+| **Variables** | Measurable state | zones.vascular.glucose, zones.cortex.delivery |
 | **Homeostasis** | Feedback loops | Low BP → ↑RAAS → retain sodium |
-| **Rhythms** | Time-based patterns | Circadian (24h), Ultradian (90m) |
+| **Axes** | Derived dashboard | Androgenic, Dopaminergic, Metabolic, etc. |
 
 ---
 
 ## 7. IMPLEMENTATION NOTES
 
-### Data Flow Architecture
+> **Note:** This is a conceptual overview. See [specs/06_ZONES.md](specs/06_ZONES.md) for the authoritative Physical Zones architecture and [specs/00_ARCHITECTURE.md](specs/00_ARCHITECTURE.md) for the tick cycle.
+
+### Data Flow Architecture (Simplified)
 
 ```rust
 // ═══════════════════════════════════════════════════════════════════════
@@ -558,7 +563,12 @@ impl AxisSnapshot {
     }
 
     fn calc_dopaminergic(s: &BodyState) -> f32 {
-        (s.hormonal.dopamine_baseline - s.hormonal.prolactin * 0.5).clamp(0.0, 1.0)
+        let effective = s.hormonal.dopamine_baseline
+            * s.hormonal.receptor_density
+            * s.hormonal.receptor_sensitivity
+            / s.hormonal.dopamine_reuptake.max(0.5);
+        let prolactin_penalty = (s.hormonal.prolactin - 1.0).max(0.0) * 0.3;
+        (effective - prolactin_penalty).clamp(0.0, 1.0)
     }
 
     fn calc_autonomic(s: &BodyState) -> f32 {

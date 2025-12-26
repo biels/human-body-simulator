@@ -33,7 +33,8 @@ Flat index of ALL variables in the simulation. This is the **Single Source of Tr
 | `digest.` | Digestive | `systems/digestive.rs` |
 | `memory.` | Memory/Learning | `systems/memory.rs` |
 | `env.` | Environment | `environment.rs` |
-| `dim.` | Dimensions | `dimensions.rs` |
+| `axes.` | Axes (Dashboard) | `axes.rs` |
+| `zones.` | Physical Zones | `zones/*.rs` |
 
 ---
 
@@ -366,18 +367,122 @@ Flat index of ALL variables in the simulation. This is the **Single Source of Tr
 
 ---
 
-## Dimensions (Dashboard - READ ONLY)
+## Axes (Dashboard - READ ONLY)
 
-| Dimension | Type | Range | Formula | Rust Path |
-|-----------|------|-------|---------|-----------|
-| Focus | `f32` | 0-100 | `f(dopamine, norepinephrine, glucose, adenosine)` | `dim.focus` |
-| Energy | `f32` | 0-100 | `f(ATP, glycogen, sleepDebt, caffeine)` | `dim.energy` |
-| Mood | `f32` | 0-100 | `f(serotonin, dopamine, cortisol, social)` | `dim.mood` |
-| Libido | `f32` | 0-100 | `f(testosterone, dopamine, prolactin, stress)` | `dim.libido` |
-| Readiness | `f32` | 0-100 | `f(glycogen, muscleFatigue, HRV, sleep)` | `dim.readiness` |
-| Hunger | `f32` | 0-100 | `f(ghrelin, leptin, glucose, fullness)` | `dim.hunger` |
-| Stress | `f32` | 0-100 | `f(cortisol, sympathetic, allostaticLoad)` | `dim.stress` |
-| Clarity | `f32` | 0-100 | `f(ketones, glucose, hydration, sleepDebt)` | `dim.clarity` |
+> **See specs/04_AXES.md for full formulas.** These are pure derivations from internal state - never set directly.
+
+| Axis | Type | Range | Primary Inputs | Rust Path |
+|------|------|-------|----------------|-----------|
+| Androgenic | `f32` | 0.0-1.0 | testosterone, retention, prolactin, receptors | `axes.androgenic` |
+| Dopaminergic | `f32` | 0.0-1.0 | dopamine × density × sensitivity / reuptake | `axes.dopaminergic` |
+| Metabolic | `enum` | Glycolytic/Hybrid/Ketogenic | ketones, glucose, fat_adaptation | `axes.metabolic` |
+| Adenosinergic | `f32` | 0.0-1.0 | adenosine, receptors_blocked, sleep_debt | `axes.adenosinergic` |
+| Autonomic | `f32` | -1.0 to 1.0 | parasympathetic - sympathetic | `axes.autonomic` |
+| Immune | `f32` | 0.0-1.0 | wbc, inflammation, cytokine_balance | `axes.immune` |
+| Thermoregulatory | `f32` | 0.0-1.0 | bat_mass, cold_adaptation, shivering_threshold | `axes.thermoregulatory` |
+
+---
+
+## Physical Zones (Mass Flow Compartments)
+
+> **See specs/06_ZONES.md for full architecture.** These are physical compartments where mass is actually located.
+
+### Zone 1: Lumen (GI Tract)
+
+| Variable | Type | Unit | Range | Rust Path | Notes |
+|----------|------|------|-------|-----------|-------|
+| Stomach carbs | `f32` | grams | 0-200 | `zones.lumen.stomach_carbs` | Recently eaten |
+| Stomach protein | `f32` | grams | 0-200 | `zones.lumen.stomach_protein` | |
+| Stomach fat | `f32` | grams | 0-200 | `zones.lumen.stomach_fat` | |
+| Stomach volume | `f32` | mL | 0-1000 | `zones.lumen.stomach_volume` | Capacity ~1000mL |
+| Intestine carbs | `f32` | grams | 0-400 | `zones.lumen.intestine_carbs` | Ready for absorption |
+| Intestine protein | `f32` | grams | 0-400 | `zones.lumen.intestine_protein` | |
+| Intestine fat | `f32` | grams | 0-400 | `zones.lumen.intestine_fat` | |
+| Gastric emptying rate | `f32` | mL/min | 1-10 | `zones.lumen.gastric_emptying_rate` | Slowed by fat, stress |
+| Absorption rate | `f32` | g/min | 0-5 | `zones.lumen.absorption_rate` | Requires gut blood flow |
+
+### Zone 2: Vascular (Blood)
+
+| Variable | Type | Unit | Range | Rust Path | Notes |
+|----------|------|------|-------|-----------|-------|
+| Plasma volume | `f32` | mL | 2500-3500 | `zones.vascular.plasma_volume` | Normally ~3000mL |
+| Total blood volume | `f32` | mL | 4000-6000 | `zones.vascular.blood_volume` | Normally ~5000mL |
+| Glucose concentration | `f32` | mg/dL | 40-300 | `zones.vascular.glucose` | Same as meta.glucose |
+| Ketone concentration | `f32` | mmol/L | 0-10 | `zones.vascular.ketones` | |
+| Sodium concentration | `f32` | mEq/L | 125-150 | `zones.vascular.sodium` | |
+| Potassium concentration | `f32` | mEq/L | 2.5-6.5 | `zones.vascular.potassium` | |
+| Oxygen saturation | `f32` | % | 80-100 | `zones.vascular.o2_sat` | |
+| Cardiac output | `f32` | L/min | 3-20 | `zones.vascular.cardiac_output` | Rest: 5, Exercise: 20+ |
+| Flow to brain | `f32` | fraction | 0.0-1.0 | `zones.vascular.flow_brain` | ~15% at rest |
+| Flow to gut | `f32` | fraction | 0.0-1.0 | `zones.vascular.flow_gut` | ~25% at rest, ↑ digesting |
+| Flow to muscle | `f32` | fraction | 0.0-1.0 | `zones.vascular.flow_muscle` | ~20% at rest, ↑↑ exercise |
+| Flow to liver | `f32` | fraction | 0.0-1.0 | `zones.vascular.flow_liver` | ~25% at rest |
+| Flow to kidney | `f32` | fraction | 0.0-1.0 | `zones.vascular.flow_kidney` | ~20% at rest |
+| Flow to skin | `f32` | fraction | 0.0-1.0 | `zones.vascular.flow_skin` | Variable (thermoregulation) |
+
+> **Critical Constraint:** `flow_brain + flow_gut + flow_muscle + flow_liver + flow_kidney + flow_skin = 1.0`
+
+### Zone 3: Hepatic (Liver)
+
+| Variable | Type | Unit | Range | Rust Path | Notes |
+|----------|------|------|-------|-----------|-------|
+| Glycogen stored | `f32` | grams | 0-100 | `zones.hepatic.glycogen` | Max ~100g |
+| Fat stored | `f32` | grams | 0-∞ | `zones.hepatic.fat` | Lipid droplets |
+| Gluconeogenesis rate | `f32` | g/hour | 0-10 | `zones.hepatic.gluconeogenesis_rate` | Glucose from protein |
+| Ketogenesis rate | `f32` | mmol/hour | 0-50 | `zones.hepatic.ketogenesis_rate` | Ketones from fat |
+| Glycogen release valve | `f32` | normalized | 0.0-1.0 | `zones.hepatic.glycogen_release_valve` | Controlled by glucagon |
+| Glycogen uptake valve | `f32` | normalized | 0.0-1.0 | `zones.hepatic.glycogen_uptake_valve` | Controlled by insulin |
+| Ketone production valve | `f32` | normalized | 0.0-1.0 | `zones.hepatic.ketone_valve` | Opens when insulin low |
+
+### Zone 4: Myo (Skeletal Muscle)
+
+| Variable | Type | Unit | Range | Rust Path | Notes |
+|----------|------|------|-------|-----------|-------|
+| Local glycogen | `f32` | grams | 0-400 | `zones.myo.glycogen` | Total across muscles |
+| ATP demand | `f32` | ATP/min | - | `zones.myo.atp_demand` | Current requirement |
+| ATP production | `f32` | ATP/min | - | `zones.myo.atp_production` | Current supply |
+| Glucose uptake rate | `f32` | g/min | 0-5 | `zones.myo.glucose_uptake` | From blood |
+| Fat oxidation rate | `f32` | g/min | 0-2 | `zones.myo.fat_oxidation` | From blood FFA |
+| Insulin receptor density | `f32` | normalized | 0.0-1.0 | `zones.myo.insulin_receptors` | Exercise increases |
+| GLUT4 translocation | `f32` | normalized | 0.0-1.0 | `zones.myo.glut4` | Insulin + contraction |
+| Lactate accumulation | `f32` | mmol/L | 0-20 | `zones.myo.lactate` | Local |
+| Fatigue level | `f32` | normalized | 0.0-1.0 | `zones.myo.fatigue` | |
+
+### Zone 5: Cortex (Brain)
+
+| Variable | Type | Unit | Range | Rust Path | Notes |
+|----------|------|------|-------|-----------|-------|
+| ATP demand | `f32` | ATP/min | - | `zones.cortex.atp_demand` | ~20% of body total |
+| Glucose delivery | `f32` | mg/min | 0-∞ | `zones.cortex.glucose_delivery` | Via blood flow |
+| Ketone delivery | `f32` | mmol/min | 0-∞ | `zones.cortex.ketone_delivery` | Via blood flow |
+| Oxygen delivery | `f32` | mL/min | 0-∞ | `zones.cortex.oxygen_delivery` | Via blood flow |
+| Electrical potential | `f32` | normalized | 0.0-1.0 | `zones.cortex.electrical_potential` | Nerve function |
+| Prefrontal demand | `f32` | normalized | 0.0-1.0 | `zones.cortex.prefrontal_demand` | Executive function |
+| Social processing demand | `f32` | normalized | 0.0-1.0 | `zones.cortex.social_demand` | FIRST to fail |
+| Motor cortex demand | `f32` | normalized | 0.0-1.0 | `zones.cortex.motor_demand` | LAST to fail |
+
+### Zone 6: Renal (Kidneys)
+
+| Variable | Type | Unit | Range | Rust Path | Notes |
+|----------|------|------|-------|-----------|-------|
+| Filtration rate | `f32` | mL/min | 60-120 | `zones.renal.gfr` | GFR |
+| Sodium reabsorption gate | `f32` | normalized | 0.0-1.0 | `zones.renal.sodium_gate` | Controlled by aldosterone |
+| Water reabsorption gate | `f32` | normalized | 0.0-1.0 | `zones.renal.water_gate` | Controlled by ADH |
+| Potassium excretion gate | `f32` | normalized | 0.0-1.0 | `zones.renal.potassium_gate` | |
+| Urine volume | `f32` | mL/hour | 20-100 | `zones.renal.urine_volume` | Output |
+| Sodium excreted | `f32` | mEq/hour | 0-10 | `zones.renal.sodium_excreted` | |
+| Waste excreted | `f32` | g/hour | 0-5 | `zones.renal.waste_excreted` | |
+
+### Hormone Valves (Control Gates Between Zones)
+
+| Variable | Type | Range | Rust Path | Controls |
+|----------|------|-------|-----------|----------|
+| Insulin valve | `f32` | 0.0-1.0 | `zones.valves.insulin` | Blood → Muscle glucose gate |
+| Glucagon valve | `f32` | 0.0-1.0 | `zones.valves.glucagon` | Liver → Blood glucose gate |
+| Adrenaline valve | `f32` | 0.0-1.0 | `zones.valves.adrenaline` | Blood flow routing override |
+| Cortisol valve | `f32` | 0.0-1.0 | `zones.valves.cortisol` | Pressure maintainer |
+| Aldosterone valve | `f32` | 0.0-1.0 | `zones.valves.aldosterone` | Kidney sodium gate |
+| ADH valve | `f32` | 0.0-1.0 | `zones.valves.adh` | Kidney water gate |
 
 ---
 
@@ -387,6 +492,8 @@ Flat index of ALL variables in the simulation. This is the **Single Source of Tr
 |--------|-------|
 | Environment variables | 10 |
 | Internal state variables | 110+ |
-| Dimensions (derived) | 8 |
+| Zone variables | 60+ |
+| Axes (derived) | 7 |
 | Total systems | 22 |
-| Rust modules | 25+ |
+| Physical zones | 6 |
+| Rust modules | 30+ |
