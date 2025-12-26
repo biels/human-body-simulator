@@ -12,7 +12,7 @@
 | 2 | **Activities** | User inputs (verbs) | `src/activities.rs` |
 | 3 | **Sensors** | Boundary translation | `src/sensors.rs` |
 | 4 | **Internal** | Body systems + state | `src/systems/`, `src/state.rs` |
-| 5 | **Dimensions** | Dashboard (derived) | `src/dimensions.rs` |
+| 5 | **Axes** | Dashboard (derived) | `src/axes.rs` |
 
 ---
 

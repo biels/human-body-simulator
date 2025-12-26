@@ -65,7 +65,7 @@ target_carbs: 50-70g ("medicinal carbs")
 evening:
   - dim_lights: 2h before bed
   - cool_room: 65-68°F (18-20°C)  # Body needs to drop 1-3°C to sleep
-  - no_caffeine: after 2pm (caffeine has 8h half-life, 25% still active at midnight if noon dose)
+  - no_caffeine: after 2pm (caffeine has 5-6h half-life, ~25% still active at midnight if noon dose)
   - no_late_exercise: 3h before bed
   - warm_bath: Optional, facilitates body heat loss after
 

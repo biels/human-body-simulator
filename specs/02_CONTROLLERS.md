@@ -305,7 +305,7 @@ The dopamine system has THREE key components:
    - ADHD: Often higher DAT activity = chronically low effective dopamine
    - This is why stimulants BLOCK reuptake → dopamine stays longer
 
-The "effective dopamine" = baseline × receptor_density × (1 / reuptake_rate)
+The "effective dopamine" = baseline × receptor_density × receptor_sensitivity / reuptake_rate
 ```
 
 ### Hormonal Logic
