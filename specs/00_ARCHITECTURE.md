@@ -283,3 +283,5 @@ Trade-off: Keto reduces social reactivity (good for anxiety, bad for spontaneity
 | `03_ACTIVITIES.md` | `src/activities.rs`, `src/environment.rs` | Input layer |
 | `04_AXES.md` | `src/axes.rs` | Output/UX layer - 7 physiological axes |
 | `DATA_DICTIONARY.md` | `src/state.rs` | All variable definitions |
+
+> **See also:** [GRAPH.md](../GRAPH.md) - Fan-out analysis and dependency maps (reference doc, not a spec)
