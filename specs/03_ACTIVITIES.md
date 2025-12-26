@@ -547,6 +547,173 @@ fn ejaculation(state: &mut BodyState) {
 
 ---
 
+## Learning Activities
+
+These affect the memory/learning system. The encoding strength depends on HOW you learn.
+
+### Activity: Study (Passive)
+
+**Parameters:** `duration_min: u16`, `material_difficulty: f32`
+
+Passive learning - reading, watching lectures. Low retention.
+
+```rust
+fn study_passive(state: &mut BodyState, duration: u16, difficulty: f32) {
+    // Passive consumption = 1.0x multiplier (baseline)
+    state.memory.testing_mult = 1.0;
+    state.memory.last_encoding = state.time;
+
+    // Add to uncommitted load based on encoding strength
+    let encoded = state.memory.encoding_strength * duration as f32 * difficulty * 0.01;
+    state.memory.uncommitted_load += encoded;
+
+    // Mild fatigue from sustained attention
+    state.attn.executive_function *= 0.995;
+}
+```
+
+---
+
+### Activity: Study (Active Recall)
+
+**Parameters:** `duration_min: u16`, `material_difficulty: f32`
+
+Self-testing, flashcards, practice problems. 4x better retention.
+
+```rust
+fn study_active(state: &mut BodyState, duration: u16, difficulty: f32) {
+    // Active recall = 3.5x multiplier
+    state.memory.testing_mult = 3.5;
+    state.memory.last_encoding = state.time;
+
+    // Much more encoding per minute
+    let encoded = state.memory.encoding_strength * duration as f32 * difficulty * 0.04;
+    state.memory.uncommitted_load += encoded;
+
+    // More tiring - uses executive function heavily
+    state.attn.executive_function *= 0.99;
+
+    // But also more rewarding (dopamine from "getting it right")
+    state.horm.dopamine_phasic += 0.1;
+}
+```
+
+---
+
+### Activity: Teach/Explain
+
+**Parameters:** `duration_min: u16`
+
+Teaching others or explaining out loud. Forces deep processing.
+
+```rust
+fn teach(state: &mut BodyState, duration: u16) {
+    // Teaching = 2.5x multiplier
+    state.memory.testing_mult = 2.5;
+    state.memory.last_encoding = state.time;
+
+    // Social + cognitive engagement
+    let encoded = state.memory.encoding_strength * duration as f32 * 0.03;
+    state.memory.uncommitted_load += encoded;
+
+    // Uses social capacity (degrades first when tired)
+    state.attn.social_capacity *= 0.98;
+}
+```
+
+---
+
+### Activity: Take Break (Gap Effect)
+
+**Parameters:** `duration_sec: u16` (10-30 seconds optimal)
+
+Micro-break during learning. Brain replays at 10-20x speed.
+
+```rust
+fn learning_break(state: &mut BodyState, duration_sec: u16) {
+    // Short breaks = replay consolidation
+    if duration_sec >= 10 && duration_sec <= 60 {
+        // Brain uses gap to rehearse recently encoded material
+        // Reduces forgetting rate temporarily
+        state.memory.forgetting_rate *= 0.5;
+
+        // Small consolidation happens even awake
+        let micro_consolidation = state.memory.uncommitted_load * 0.02;
+        state.memory.uncommitted_load -= micro_consolidation;
+    }
+
+    // Executive function recovery
+    state.attn.executive_function += 0.01;
+}
+```
+
+---
+
+### Activity: Spaced Repetition Session
+
+**Parameters:** `material_id: string`, `session_number: u8`
+
+Reviewing material at optimal spacing intervals.
+
+```rust
+fn spaced_repetition(state: &mut BodyState, session_number: u8) {
+    // Spacing factor increases with proper intervals
+    // Session 1: immediate, Session 2: next day, Session 3: 3 days, etc.
+    state.memory.spacing_factor = match session_number {
+        1 => 1.0,   // First exposure
+        2 => 1.5,   // Next day
+        3 => 1.8,   // 3 days later
+        4 => 2.0,   // 1 week later
+        _ => 2.0,   // Maintaining
+    };
+
+    // Combined with active recall
+    state.memory.testing_mult = 3.0;
+
+    // Very efficient encoding
+    let encoded = state.memory.encoding_strength * 10.0 * state.memory.spacing_factor;
+    state.memory.uncommitted_load += encoded;
+}
+```
+
+---
+
+### Activity: Deep Work Session
+
+**Parameters:** `duration_min: u16` (90 min optimal = ultradian cycle)
+
+Sustained focused work. Combines encoding with flow potential.
+
+```rust
+fn deep_work(state: &mut BodyState, duration: u16) {
+    // First 5-10 minutes are painful (normal)
+    // Then focus locks in
+
+    if state.ultra.state == UltradianState::Peak
+        || state.ultra.state == UltradianState::Plateau
+    {
+        // Aligned with ultradian cycle = optimal
+        state.memory.testing_mult = 2.0;
+
+        // BDNF can rise from sustained focus
+        state.horm.bdnf += 0.001 * duration as f32;
+    } else {
+        // Against the cycle = harder
+        state.memory.testing_mult = 1.2;
+    }
+
+    state.memory.last_encoding = state.time;
+
+    let encoded = state.memory.encoding_strength * duration as f32 * 0.02;
+    state.memory.uncommitted_load += encoded;
+
+    // Must rest after (ultradian trough)
+    state.ultra.rest_need += duration as f32 / 90.0;
+}
+```
+
+---
+
 ## Passive Activities
 
 ### Activity: Wait
@@ -626,4 +793,10 @@ fn schedule(timeline: &mut Timeline, at_tick: u64, activity: Activity) {
 | Meditate | Body | Autonomic, Attention |
 | Breathe | Body | Respiratory, Autonomic |
 | Ejaculation | Body | Hormonal |
+| Study (passive) | Body | Memory, Attention |
+| Study (active) | Body | Memory, Attention, Hormonal |
+| Teach/Explain | Body | Memory, Attention, Social |
+| Learning Break | Body | Memory, Attention |
+| Spaced Repetition | Body | Memory |
+| Deep Work | Body | Memory, Attention, Ultradian |
 | Wait | None | Time passes |

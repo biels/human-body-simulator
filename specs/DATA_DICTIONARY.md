@@ -356,6 +356,13 @@ Flat index of ALL variables in the simulation. This is the **Single Source of Tr
 | Working memory | `f32` | normalized | 0.0-1.0 | `memory.working` | Active capacity |
 | Consolidation state | `enum` | - | encoding/consolidating/retrieving | `memory.state` | |
 | Neuroplasticity window | `bool` | - | - | `memory.plasticity_window` | Enhanced learning |
+| Encoding strength (K) | `f32` | normalized | 0.0-1.0 | `memory.encoding_strength` | Effective learning rate RIGHT NOW |
+| Uncommitted load | `f32` | arbitrary | 0.0-∞ | `memory.uncommitted_load` | Pending consolidation during sleep |
+| Consolidation rate | `f32` | per-hour | 0.0-1.0 | `memory.consolidation_rate` | How fast sleep commits memories |
+| Testing multiplier | `f32` | multiplier | 1.0-4.0 | `memory.testing_mult` | Active recall = 4x, passive = 1x |
+| Spacing factor | `f32` | multiplier | 0.5-2.0 | `memory.spacing_factor` | Distributed > massed practice |
+| Forgetting rate | `f32` | per-hour | 0.0-0.5 | `memory.forgetting_rate` | Uncommitted traces decay |
+| Last encoding time | `u32` | minutes | 0-∞ | `memory.last_encoding` | For spacing calculations |
 
 ---
 

@@ -157,6 +157,82 @@ Fan-out: 15+ (highest of any single variable)
 ADHD: High reuptake → same input, less effect → need "Level 10" for "Level 5"
 ```
 
+### Learning System (Encode → Consolidate)
+
+```
+LEARNING = Two Phases
+═════════════════════════════════════════════════════════════════════════
+
+    ENCODING (awake, focused)                 CONSOLIDATION (sleep)
+    ────────────────────────                  ────────────────────
+              │                                         │
+              ▼                                         ▼
+┌─────────────────────────────┐         ┌─────────────────────────────┐
+│     ENCODING STRENGTH (K)   │         │    CONSOLIDATION RATE       │
+│  = attention                │         │  = sleep_quality            │
+│  × norepinephrine           │         │  × (SWS > REM > Light)      │
+│  × BDNF                     │         │  × (1 - sleep_debt)         │
+│  × testing_mult (1-4x)      │         │                             │
+│  × spacing_factor (0.5-2x)  │────────▶│  Commits uncommitted_load   │
+│  × (1 - sleep_debt)         │         │  to permanent memory        │
+└─────────────────────────────┘         └─────────────────────────────┘
+              │                                         │
+              ▼                                         │
+┌─────────────────────────────┐                         │
+│     UNCOMMITTED LOAD        │◀────────────────────────┘
+│  (pending consolidation)    │         Clears during sleep
+│                             │
+│  DECAYS if not consolidated │
+│  (forgetting curve)         │
+└─────────────────────────────┘
+
+WHY SLEEP MATTERS:
+  All-nighter studying → high uncommitted_load → no consolidation → lost
+  Study + sleep → encoded → consolidated → retained
+
+WHY TESTING MATTERS:
+  Passive reading: testing_mult = 1.0 → K = low
+  Active recall:   testing_mult = 3.5 → K = 3.5x higher
+
+WHY SPACING MATTERS:
+  Massed practice: spacing_factor = 0.5 → diminishing returns
+  Spaced review:   spacing_factor = 2.0 → optimal retention
+```
+
+### Learning Pathway Dependencies
+
+```
+WHAT AFFECTS ENCODING STRENGTH (K):
+════════════════════════════════════════════════════════════════════
+
+Executive Function ──┐
+                     │
+Norepinephrine ──────┼──→ Encoding Strength (K) ──→ Uncommitted Load
+                     │               ▲
+BDNF ────────────────┤               │
+                     │               │
+Sleep Debt ──────────┘      Testing Method ────────┘
+(penalty)                   (1-4x multiplier)
+
+
+WHAT AFFECTS CONSOLIDATION:
+════════════════════════════════════════════════════════════════════
+
+Sleep Stage ──┐
+  SWS = 1.0   │
+  REM = 0.7   ├──→ Consolidation Rate ──→ Reduces Uncommitted Load
+  Light = 0.3 │                                    │
+              │                                    ▼
+Sleep Debt ───┘                             Permanent Memory
+(penalty)
+
+
+HIGH FAN-OUT NODES FOR LEARNING:
+  Sleep Debt → affects BOTH encoding AND consolidation (double hit)
+  BDNF → affects encoding strength directly
+  Executive Function → affects attention → affects encoding
+```
+
 ---
 
 ## Pathway Examples

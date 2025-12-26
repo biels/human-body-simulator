@@ -901,46 +901,201 @@ fn perceptual_tick(state: &mut BodyState) {
 
 ## System: Memory & Learning
 
-Neuroplasticity windows and consolidation.
+Neuroplasticity, encoding strength, and the "commit during sleep" model.
+
+### The Two-Phase Model
+
+```
+LEARNING = ENCODING (awake) + CONSOLIDATION (sleep)
+════════════════════════════════════════════════════════════════════
+
+1. ENCODING (while focused)
+   ─────────────────────────
+   - Creates "uncommitted" memory traces
+   - Strength depends on: attention, BDNF, testing vs passive, spacing
+   - Uncommitted traces DECAY if not consolidated
+
+2. CONSOLIDATION (during sleep)
+   ────────────────────────────
+   - SWS (deep sleep): Declarative memories → cortex
+   - REM: Procedural/emotional integration
+   - Clears uncommitted_load, makes memories permanent
+
+   IF sleep skipped → uncommitted traces lost
+   This is why "sleep on it" works
+
+THE FORGETTING CURVE:
+   - Lose ~50% in first hour if not consolidated
+   - Spaced retrieval resets the curve
+   - Testing yourself = 4x stronger encoding than passive reading
+```
 
 ### State Variables
 | Variable | Rust Path | Notes |
 |----------|-----------|-------|
-| `working` | `memory.working` | Active capacity |
+| `working` | `memory.working` | Active capacity (RAM) |
 | `state` | `memory.state` | encoding/consolidating/retrieving |
-| `plasticity_window` | `memory.plasticity_window` | Enhanced learning |
+| `plasticity_window` | `memory.plasticity_window` | Enhanced learning possible |
+| `encoding_strength` | `memory.encoding_strength` | The effective K - learning rate NOW |
+| `uncommitted_load` | `memory.uncommitted_load` | Pending consolidation |
+| `consolidation_rate` | `memory.consolidation_rate` | How fast sleep commits |
+| `testing_mult` | `memory.testing_mult` | Active recall multiplier |
+| `spacing_factor` | `memory.spacing_factor` | Distributed practice bonus |
+| `forgetting_rate` | `memory.forgetting_rate` | Uncommitted decay rate |
 
 ### Memory Logic
 
 ```rust
 fn memory_tick(state: &mut BodyState) {
-    // WORKING MEMORY affected by sleep debt
+    // WORKING MEMORY (RAM) - affected by sleep debt
     state.memory.working = (1.0 - state.energy.sleep_debt / 12.0).clamp(0.3, 1.0);
 
-    // NEUROPLASTICITY WINDOWS
+    // NEUROPLASTICITY WINDOW
     let plasticity_active =
-        state.horm.bdnf > 0.6  // Exercise/fasting boost
-        || state.attn.in_flow  // Focus opens window
-        || state.is_sleeping;   // Sleep consolidates
+        state.horm.bdnf > 0.6      // Exercise/fasting boost
+        || state.attn.in_flow      // Focus opens window
+        || state.is_sleeping;       // Sleep consolidates
 
     state.memory.plasticity_window = plasticity_active;
+
+    // ENCODING STRENGTH (The effective K)
+    // This is how well you learn RIGHT NOW
+    if !state.is_sleeping {
+        let attention_factor = state.attn.executive_function;
+        let alertness_factor = state.horm.norepinephrine.min(1.0);
+        let plasticity_factor = if state.horm.bdnf > 0.5 { 1.0 + state.horm.bdnf } else { 1.0 };
+        let sleep_penalty = 1.0 - (state.energy.sleep_debt / 16.0).min(0.5);
+
+        state.memory.encoding_strength = (
+            attention_factor
+            * alertness_factor
+            * plasticity_factor
+            * sleep_penalty
+            * state.memory.testing_mult
+            * state.memory.spacing_factor
+        ).clamp(0.0, 1.0);
+    } else {
+        state.memory.encoding_strength = 0.0;  // Not encoding while asleep
+    }
+
+    // SPACING FACTOR - time since last encoding session
+    let hours_since_encoding = (state.time - state.memory.last_encoding) as f32 / 60.0;
+    state.memory.spacing_factor = match hours_since_encoding {
+        0.0..=0.5 => 0.5,    // Massed practice - diminishing returns
+        0.5..=2.0 => 0.8,    // Too close
+        2.0..=8.0 => 1.2,    // Good spacing
+        8.0..=24.0 => 1.5,   // Optimal
+        24.0..=72.0 => 2.0,  // Spaced repetition sweet spot
+        _ => 1.0,            // Very long gap - reset
+    };
+
+    // FORGETTING - uncommitted traces decay
+    if !state.is_sleeping && state.memory.uncommitted_load > 0.0 {
+        // Decay rate: ~50% in first hour without consolidation
+        state.memory.forgetting_rate = 0.01 * (1.0 + state.energy.sleep_debt / 8.0);
+        state.memory.uncommitted_load *= 1.0 - state.memory.forgetting_rate;
+    }
 
     // CONSOLIDATION STATE
     if state.is_sleeping {
         state.memory.state = MemoryState::Consolidating;
-    } else if state.attn.in_flow {
+
+        // Consolidation rate depends on sleep quality
+        let sleep_quality = match state.sleep_stage {
+            SleepStage::Deep => 1.0,    // SWS: Best for declarative
+            SleepStage::REM => 0.7,     // REM: Procedural/emotional
+            SleepStage::Light => 0.3,   // N1/N2: Some consolidation
+            _ => 0.0,
+        };
+
+        state.memory.consolidation_rate = sleep_quality * (1.0 - state.energy.sleep_debt / 24.0);
+
+        // Actually consolidate - reduce uncommitted load
+        let consolidated = state.memory.uncommitted_load * state.memory.consolidation_rate * 0.1;
+        state.memory.uncommitted_load -= consolidated;
+        state.memory.uncommitted_load = state.memory.uncommitted_load.max(0.0);
+
+    } else if state.attn.in_flow || state.attn.executive_function > 0.7 {
         state.memory.state = MemoryState::Encoding;
+
+        // Encoding adds to uncommitted load
+        // (actual amount added depends on activity - see 03_ACTIVITIES.md)
+
     } else {
         state.memory.state = MemoryState::Retrieving;
     }
 }
 ```
 
+### Testing Effect
+
+```
+The Testing Revolution (Huberman/research):
+
+PASSIVE (reading, watching):     retention = 20%
+ACTIVE (self-testing):           retention = 80%
+
+WHY: Testing creates retrieval practice, which:
+1. Strengthens memory traces (more connections)
+2. Identifies gaps (know what you don't know)
+3. Resets forgetting curve
+4. Activates deeper encoding
+
+testing_mult values:
+- Passive consumption: 1.0
+- Note-taking: 1.5
+- Teaching others: 2.5
+- Self-testing: 3.0-4.0
+```
+
+### Gap Effects
+
+```
+MICRO-BREAKS DURING LEARNING:
+
+Continuous focus:  ████████████████████████
+                   Learning flattens, fatigue builds
+
+With gaps:         ████░░████░░████░░████░░
+                   Brain replays during gaps (10-20x speed)
+                   Actually ACCELERATES learning
+
+Optimal: 10-second breaks every few minutes during intense learning
+The brain uses gaps to rehearse and consolidate in real-time
+```
+
 ### Plasticity Triggers
-| Trigger | Duration | Mechanism |
-|---------|----------|-----------|
-| Focused attention | During focus | Acetylcholine |
-| Exercise | 1-2 hours | BDNF |
-| Sleep (SWS) | During deep sleep | Declarative memory |
-| Sleep (REM) | During REM | Procedural/emotional |
-| Novelty | Variable | Dopamine-enhanced |
+| Trigger | Duration | Mechanism | K Multiplier |
+|---------|----------|-----------|--------------|
+| Focused attention | During focus | Acetylcholine | 1.3x |
+| Exercise | 1-2 hours | BDNF ↑ | 1.5x |
+| Sleep (SWS) | During deep sleep | Consolidation | N/A (commits) |
+| Sleep (REM) | During REM | Pattern integration | N/A (commits) |
+| Novelty | Variable | Dopamine-enhanced | 1.4x |
+| Testing/recall | During test | Retrieval practice | 3-4x |
+| Fasting | While fasted | BDNF ↑ | 1.3x |
+| Cold exposure | 1-2 hours | NE + BDNF | 1.4x |
+
+### The "Sleep On It" Effect
+
+```rust
+// Why you MUST sleep to learn:
+
+fn learning_outcome(encoded: f32, sleep_quality: f32, sleep_hours: f32) -> f32 {
+    let consolidation = (sleep_quality * sleep_hours / 8.0).min(1.0);
+
+    // Without consolidation, most is lost
+    let retained = encoded * (0.2 + 0.8 * consolidation);
+
+    // This is why all-nighters before exams FAIL
+    // You encoded it but never committed it
+
+    retained
+}
+```
+
+### Outputs (Modifies)
+| Writes To | Variable | Effect |
+|-----------|----------|--------|
+| `attn` | `focus_duration` | Better memory = longer focus |
+| (external) | Long-term memory | Consolidated knowledge |
