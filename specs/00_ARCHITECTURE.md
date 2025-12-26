@@ -282,6 +282,25 @@ Trade-off: Keto reduces social reactivity (good for anxiety, bad for spontaneity
 | `02_CONTROLLERS.md` | `src/systems/{circadian,hormonal,autonomic}.rs` | Regulatory systems |
 | `03_ACTIVITIES.md` | `src/activities.rs`, `src/environment.rs` | Input layer |
 | `04_AXES.md` | `src/axes.rs` | Output/UX layer - 7 physiological axes |
+| `06_ZONES.md` | `src/zones/*.rs` | **Physical compartments and mass flow** |
 | `DATA_DICTIONARY.md` | `src/state.rs` | All variable definitions |
 
 > **See also:** [GRAPH.md](../GRAPH.md) - Fan-out analysis and dependency maps (reference doc, not a spec)
+
+---
+
+## Architecture Note: Physics vs Rules
+
+This simulation uses a **Physics-based** approach, not rule-based:
+
+```
+RULES (what we avoid):          PHYSICS (what we do):
+────────────────────            ─────────────────────
+if eating { drowsy = true }     Blood routes to gut
+if exercise { focus -= 0.2 }    → Less blood to brain
+if glucose < 50 { confuse }     → Less glucose delivery
+                                → Reduced function
+"Teleporting" effects           EMERGENT effects
+```
+
+See `06_ZONES.md` for the physical compartment model.
