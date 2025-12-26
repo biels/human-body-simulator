@@ -1,0 +1,47 @@
+Okay so the idea is to
+
+Make a
+
+Body simulator, enter keto, need to replenish water and electrolytes
+
+The idea is that it operates on timefreames, and we have a ui to make it do things and see what happens
+
+When doing sample activities
+
+
+The basis is $user/git/protocol-experimetns/  /mcts-simple
+
+In our case instead of an mcts we'll jsut make it do things of course we can go back in time and do another thing.
+
+We need
+
+1. tme frame activity system
+3. Dimensions and subsystems of the body clearly defined
+    And visualized
+2. A way to define activities effects
+
+
+Look up in my gemini and google drive
+
+We can reference andrew huberman
+
+And then the goal is to make some sort of renderer like
+
+
+A concpet also similar to "https://www.youtube.com/watch?v=RKT-sKtR970"
+
+"Simulating an Entire Car Engine (yes, it makes noise)"
+But for a human body
+
+Also lets try to reference what is the state of the art for something like this
+
+
+
+in rust for speed and type safety
+we need to see how to implement the different subsystems
+
+
+then do simulations with different factors and make sure the researdch online and ai odels validate what we see
+
+
+And also be albe to better plan how best to do x validating the response of the AI
