@@ -58,25 +58,24 @@ A taxonomy of all entities in the simulation and how they relate.
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                         5. DIMENSIONS                                    │
-│                (The Dashboard / User Experience)                         │
+│                         5. AXES                                          │
+│              (Felt Physiological Pathways)                               │
 │                                                                          │
-│   Derived high-level scores calculated FROM internal state.             │
+│   7 fundamental dimensions you can FEEL, mapped to real pathways.       │
 │   These answer: "How do I feel?"                                        │
 │                                                                          │
-│   • Focus        = f(dopamine, norepinephrine, glucose, adenosine)      │
-│   • Energy       = f(ATP, glycogen, sleepDebt, caffeine)                │
-│   • Mood         = f(serotonin, dopamine, cortisol, socialSupport)      │
-│   • Libido       = f(testosterone, dopamine, prolactin, stress)         │
-│   • Readiness    = f(glycogen, muscleFatigue, HRV, sleepQuality)        │
-│   • Hunger       = f(ghrelin, leptin, bloodGlucose, stomachFullness)    │
-│   • Stress       = f(cortisol, sympathetic, allostaticLoad)             │
-│   • Clarity      = f(ketones, glucose, hydration, sleepDebt)            │
+│   • Androgenic      = Testosterone pathway (drive, libido, confidence)  │
+│   • Dopaminergic    = Dopamine baseline (content vs seeking)            │
+│   • Metabolic       = Keto vs Glycolytic (hunger, clarity, stability)   │
+│   • Adenosinergic   = Sleep pressure (alert vs sleepy)                  │
+│   • Autonomic       = Symp/Para balance (stressed vs calm)              │
+│   • Immune          = Inflammation (resilient vs run down)              │
+│   • Thermoregulatory = BAT/cold adaptation (cold tolerance)             │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Key Insight:** The user NEVER sets internal variables directly. You can't "set" your dopamine—you must do an activity that triggers it. Dimensions are READ-ONLY views calculated from state.
+**Key Insight:** The user NEVER sets internal variables directly. You can't "set" your dopamine—you must do an activity that triggers it. Axes are READ-ONLY views calculated from state.
 
 ---
 
@@ -521,58 +520,52 @@ struct BodyState {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// 5. DIMENSIONS (The Dashboard - Derived Read-Only)
+// 5. AXES (Felt Physiological Pathways - Derived Read-Only)
 // ═══════════════════════════════════════════════════════════════════════
-struct Dimensions {
-    focus: f32,       // 0-100
-    energy: f32,      // 0-100
-    mood: f32,        // 0-100
-    libido: f32,      // 0-100
-    readiness: f32,   // 0-100 (physical)
-    hunger: f32,      // 0-100
-    stress: f32,      // 0-100
-    clarity: f32,     // 0-100 (mental)
+struct AxisSnapshot {
+    androgenic: f32,       // 0.0-1.0 (drive, libido, confidence)
+    dopaminergic: f32,     // 0.0-1.0 (content vs seeking)
+    metabolic: FuelMode,   // Glycolytic/Hybrid/Ketogenic
+    adenosinergic: f32,    // 0.0-1.0 (alertness)
+    autonomic: f32,        // -1.0 (stressed) to 1.0 (calm)
+    immune: f32,           // 0.0-1.0 (resilience)
+    thermoregulatory: f32, // 0.0-1.0 (cold tolerance)
 }
 
-impl Dimensions {
-    /// PURE FUNCTION: Dimensions are ALWAYS calculated from state
-    fn calculate(state: &BodyState) -> Self {
+impl AxisSnapshot {
+    /// PURE FUNCTION: Axes are ALWAYS calculated from state
+    fn from_state(state: &BodyState) -> Self {
         Self {
-            focus: Self::calc_focus(state),
-            energy: Self::calc_energy(state),
-            mood: Self::calc_mood(state),
-            libido: Self::calc_libido(state),
-            readiness: Self::calc_readiness(state),
-            hunger: Self::calc_hunger(state),
-            stress: Self::calc_stress(state),
-            clarity: Self::calc_clarity(state),
+            androgenic: Self::calc_androgenic(state),
+            dopaminergic: Self::calc_dopaminergic(state),
+            metabolic: Self::calc_metabolic(state),
+            adenosinergic: Self::calc_adenosinergic(state),
+            autonomic: Self::calc_autonomic(state),
+            immune: Self::calc_immune(state),
+            thermoregulatory: Self::calc_thermoregulatory(state),
         }
     }
 
-    fn calc_focus(s: &BodyState) -> f32 {
-        let base = s.hormonal.dopamine * 30.0
-                 + s.hormonal.norepinephrine * 25.0
-                 + (1.0 - s.energy.adenosine) * 20.0;  // Less adenosine = more alert
-
-        // Glucose penalty: too low or too high hurts focus
-        let glucose_penalty = if s.metabolic.blood_glucose < 70.0 {
-            (70.0 - s.metabolic.blood_glucose) * 0.5
-        } else if s.metabolic.blood_glucose > 140.0 {
-            (s.metabolic.blood_glucose - 140.0) * 0.3
-        } else { 0.0 };
-
-        (base - glucose_penalty).clamp(0.0, 100.0)
+    fn calc_androgenic(s: &BodyState) -> f32 {
+        let t_factor = (s.hormonal.testosterone / 800.0).clamp(0.0, 1.0);
+        let retention_bonus = match s.hormonal.retention_days as u16 {
+            0..=2 => -0.3,
+            3..=6 => 0.0,
+            7..=14 => 0.2,
+            _ => 0.15,
+        };
+        (t_factor + retention_bonus - s.hormonal.prolactin * 0.4).clamp(0.0, 1.0)
     }
 
-    fn calc_libido(s: &BodyState) -> f32 {
-        let base = s.hormonal.testosterone * 40.0
-                 + s.hormonal.dopamine * 30.0;
-        let suppressors = s.hormonal.prolactin * 50.0  // Post-ejaculation
-                        + s.autonomic.cortisol * 20.0;  // Stress
-        (base - suppressors).clamp(0.0, 100.0)
+    fn calc_dopaminergic(s: &BodyState) -> f32 {
+        (s.hormonal.dopamine_baseline - s.hormonal.prolactin * 0.5).clamp(0.0, 1.0)
     }
 
-    // ... other dimension calculations
+    fn calc_autonomic(s: &BodyState) -> f32 {
+        s.autonomic.parasympathetic - s.autonomic.sympathetic
+    }
+
+    // ... other axis calculations (see specs/04_AXES.md)
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -614,8 +607,8 @@ impl Simulation {
         self.history.push(self.state.clone());
     }
 
-    /// Get current dashboard (read-only view for UI)
-    fn dimensions(&self) -> Dimensions {
-        Dimensions::calculate(&self.state)
+    /// Get current axes (read-only view for UI)
+    fn axes(&self) -> AxisSnapshot {
+        AxisSnapshot::from_state(&self.state)
     }
 }
