@@ -285,6 +285,29 @@ Signaling molecules that coordinate systems across the body.
 L-Tyrosine → L-DOPA → Dopamine → Norepinephrine → Adrenaline
 ```
 
+### Dopamine Dynamics (Critical for ADHD)
+
+```
+The dopamine system has THREE key components:
+
+1. BASELINE (tonic): The steady-state level
+   - Sets reward threshold
+   - High baseline = content, patient
+   - Low baseline = seeking, impulsive
+
+2. RECEPTOR DENSITY: Number of D2 receptors
+   - Downregulates with frequent stimulation (porn, social media, etc.)
+   - Recovery: weeks to months of abstinence
+   - ADHD: often lower baseline density
+
+3. REUPTAKE RATE (DAT): How fast dopamine clears the synapse
+   - High DAT = dopamine clears quickly = need more hits
+   - ADHD: Often higher DAT activity = chronically low effective dopamine
+   - This is why stimulants BLOCK reuptake → dopamine stays longer
+
+The "effective dopamine" = baseline × receptor_density × (1 / reuptake_rate)
+```
+
 ### Hormonal Logic
 
 ```rust
@@ -292,6 +315,39 @@ fn hormonal_tick(state: &mut BodyState) {
     // DOPAMINE DYNAMICS
     // Phasic spikes decay quickly
     state.horm.dopamine_phasic *= 0.9;
+
+    // REUPTAKE: Higher rate = faster clearance of phasic dopamine
+    // ADHD typically has higher reuptake (DAT hyperactivity)
+    let reuptake_factor = state.horm.dopamine_reuptake;
+    state.horm.dopamine_phasic *= 1.0 - (0.1 * reuptake_factor);
+
+    // RECEPTOR DENSITY: Downregulates with frequent high-reward
+    // Recovery is SLOW (weeks)
+    let time_since_reward = state.horm.last_reward_time as f32;
+    if time_since_reward < 60.0 {
+        // Recent reward → slight downregulation
+        state.horm.receptor_density *= 0.9999;
+    } else if time_since_reward > 4320.0 {
+        // 3+ days abstinence → slow recovery (peaks day 4-6)
+        state.horm.receptor_density += 0.0001;
+    }
+    state.horm.receptor_density = state.horm.receptor_density.clamp(0.3, 1.0);
+
+    // RECEPTOR SENSITIVITY: Faster recovery than density
+    // Upregulates with abstinence from high-reward activities
+    if time_since_reward > 1440.0 {
+        // 1+ days → sensitivity starts recovering
+        state.horm.receptor_sensitivity += 0.001;
+    }
+    state.horm.receptor_sensitivity = state.horm.receptor_sensitivity.clamp(0.2, 1.0);
+
+    // SEEKING BEHAVIOR: Inverse of effective dopamine
+    // High seeking = restless, distractible, scrolling, craving
+    let effective_dopamine = state.horm.dopamine_baseline
+        * state.horm.receptor_density
+        * state.horm.receptor_sensitivity
+        / state.horm.dopamine_reuptake;
+    state.horm.seeking = (1.0 - effective_dopamine).clamp(0.0, 1.0);
 
     // Baseline affected by sleep, retention, activities
     // (mostly set by activities)
@@ -317,20 +373,44 @@ fn hormonal_tick(state: &mut BodyState) {
 
     // RETENTION EFFECTS
     state.horm.retention_days += 1.0 / 1440.0;  // Per minute
-    match state.horm.retention_days as u16 {
+    let days = state.horm.retention_days as u16;
+
+    // PROLACTIN DYNAMICS (see also: 03_ACTIVITIES.md for spike on ejaculation)
+    // Spike: 4.0 (400% of baseline) immediately post-ejac
+    // Decay: ~2 weeks to return to baseline
+    // Half-life: ~3-4 days
+    // Effect: Antagonizes dopamine, creates "satisfied/sleepy/dad mode"
+    let prolactin_half_life_mins = 5760.0;  // ~4 days in minutes
+    let prolactin_decay = 0.5_f32.powf(1.0 / prolactin_half_life_mins);
+    state.horm.prolactin = 1.0 + (state.horm.prolactin - 1.0) * prolactin_decay;
+
+    // TESTOSTERONE DYNAMICS with retention
+    match days {
         0..=2 => {
-            // Post-ejac recovery
-            state.horm.prolactin *= 0.99;  // Slow decay
+            // Post-ejac: testosterone suppressed slightly
+            // Prolactin is antagonizing it
+        }
+        3..=6 => {
+            // Building toward peak
+            state.horm.testosterone *= 1.001;
         }
         7 => {
-            // Day 7 peak
-            state.horm.testosterone *= 1.002;  // +45% by day 7
+            // Day 7 peak: +45% from baseline
+            state.horm.testosterone *= 1.003;
         }
-        _ => {}
+        8..=14 => {
+            // Stabilizes at elevated level (~15% above baseline)
+        }
+        _ => {
+            // Long-term retention: sustained elevated baseline
+        }
     }
 
-    // PROLACTIN decay
-    state.horm.prolactin *= 0.998;
+    // ANDROGEN RECEPTOR SENSITIVITY increases with retention
+    // This is why effects compound - same T hits harder
+    if days > 7 {
+        state.horm.receptor_sensitivity += 0.0001;
+    }
 
     // MELATONIN (handled in circadian)
 
@@ -664,27 +744,102 @@ fn motivation(input: f32, gamma: f32) -> f32 {
 }
 ```
 
+### Cognitive Degradation Hierarchy
+
+```
+ATP is LIMITED. When depleted, brain triages functions:
+
+FIRST TO DEGRADE (most expensive):
+1. Social cognition (~20% of brain ATP when active)
+   - "Can't greet people" when tired
+   - Requires BOTH systems online
+
+SECOND TO DEGRADE:
+2. Executive function (~15%)
+   - System 2 thinking
+   - Complex planning
+   - "Can't hold complex thoughts"
+
+THIRD TO DEGRADE:
+3. Language fluency (~12%)
+   - Word-finding difficulty
+   - Slower speech
+
+FOURTH TO DEGRADE:
+4. Memory formation (~10%)
+   - Can still retrieve
+   - Can't form new memories well
+
+LAST TO DEGRADE (protected):
+5. Motor control (~8%)
+   - "Can sprint but can't talk" when exhausted
+   - Crisis response actually ENHANCED
+
+This explains why tired feels like "can still do physical stuff, can't think"
+```
+
 ### Attention Logic
 
 ```rust
 fn attention_tick(state: &mut BodyState) {
+    // COGNITIVE CAPACITY DEGRADATION
+    // Based on sleep debt, adenosine, ATP
+    let depletion = (state.energy.sleep_debt / 8.0
+        + state.energy.adenosine
+        + (1.0 - state.energy.atp))
+        / 3.0;
+
+    // DEGRADATION HIERARCHY (first to fail → last)
+    state.attn.social_capacity = (1.0 - depletion * 2.0).clamp(0.0, 1.0);
+    state.attn.executive_function = (1.0 - depletion * 1.5).clamp(0.0, 1.0);
+    state.attn.motor_precision = (1.0 - depletion * 0.3).clamp(0.5, 1.0);
+
+    // MOTOR PRECISION also boosted by retention (dopamine → fine motor control)
+    if state.horm.retention_days > 7.0 {
+        state.attn.motor_precision += 0.1;
+    }
+    state.attn.motor_precision = state.attn.motor_precision.clamp(0.0, 1.0);
+
     // ACTIVATION ENERGY
     // Higher dopamine → lower barrier to start
+    // Higher gamma (ADHD) → needs more activation to start
+    let effective_dopamine = state.horm.dopamine_baseline
+        * state.horm.receptor_density
+        * state.horm.receptor_sensitivity;
     state.attn.activation_energy =
-        0.5 / state.horm.dopamine_baseline.max(0.1) * state.attn.gamma;
+        0.5 / effective_dopamine.max(0.1) * state.attn.gamma;
+
+    // EXPLORATION vs EXPLOITATION
+    // ADHD: naturally high exploration, low exploitation capacity
+    // Dopamine baseline affects the balance:
+    // - Low dopamine = high exploration (seeking novelty)
+    // - High dopamine = can exploit (content with current path)
+    state.attn.exploration = state.horm.seeking;  // Seeking = exploring
+    state.attn.exploitation = effective_dopamine;
+
+    // TIME PREFERENCE / DISCOUNT RATE
+    // Low dopamine → high discount rate → "I want it NOW"
+    // High dopamine → low discount rate → "I can wait for better"
+    // Also affected by testosterone (high T → more present bias)
+    state.attn.discount_rate = (1.0 - effective_dopamine
+        + state.horm.testosterone / 1000.0 * 0.1)
+        .clamp(0.0, 1.0);
+    state.attn.time_horizon = 24.0 / (state.attn.discount_rate + 0.1);
 
     // FLOW STATE DETECTION
     // Requires: high dopamine + high norepinephrine + low cortisol + skill-challenge match
     let flow_conditions =
-        state.horm.dopamine_baseline > 0.6
+        effective_dopamine > 0.5
         && state.horm.norepinephrine > 0.5
         && state.ans.cortisol < 0.6
         && state.ultra.state != UltradianState::Trough;
 
     state.attn.in_flow = flow_conditions;
 
-    // FOCUS DURATION modulated by ultradian
-    state.attn.focus_duration = 60.0 * state.ultra.focus_capacity;
+    // FOCUS DURATION modulated by ultradian and executive function
+    state.attn.focus_duration = 60.0
+        * state.ultra.focus_capacity
+        * state.attn.executive_function;
 }
 ```
 

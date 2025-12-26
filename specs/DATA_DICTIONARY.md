@@ -158,14 +158,19 @@ Flat index of ALL variables in the simulation. This is the **Single Source of Tr
 
 | Variable | Type | Unit | Range | Rust Path | Notes |
 |----------|------|------|-------|-----------|-------|
-| Dopamine baseline | `f32` | normalized | 0.0-1.0 | `horm.dopamine_baseline` | Tonic level |
-| Dopamine phasic | `f32` | normalized | 0.0-2.0 | `horm.dopamine_phasic` | Acute spikes |
+| Dopamine baseline | `f32` | normalized | 0.0-1.0 | `horm.dopamine_baseline` | Tonic level (setpoint) |
+| Dopamine phasic | `f32` | normalized | 0.0-2.0 | `horm.dopamine_phasic` | Acute spikes above baseline |
+| Dopamine reuptake rate | `f32` | normalized | 0.5-2.0 | `horm.dopamine_reuptake` | DAT activity - ADHD: higher = clears faster |
+| Receptor density | `f32` | normalized | 0.0-1.0 | `horm.receptor_density` | Number of D2 receptors - downregulates with frequent stimulation |
+| Receptor sensitivity | `f32` | normalized | 0.0-1.0 | `horm.receptor_sensitivity` | How responsive each receptor is - upregulates with abstinence |
+| Seeking behavior | `f32` | normalized | 0.0-1.0 | `horm.seeking` | Drive to find dopamine hits = f(1 - baseline × sensitivity) |
+| Last reward time | `u32` | minutes | 0-∞ | `horm.last_reward_time` | Minutes since last high-reward activity |
 | Norepinephrine | `f32` | normalized | 0.0-1.0 | `horm.norepinephrine` | Alertness |
 | Adrenaline | `f32` | normalized | 0.0-1.0 | `horm.adrenaline` | Acute stress |
 | Orexin | `f32` | normalized | 0.0-1.0 | `horm.orexin` | Wakefulness |
 | Testosterone | `f32` | ng/dL | 200-1200 | `horm.testosterone` | |
 | DHT | `f32` | normalized | 0.0-1.0 | `horm.dht` | Potent androgen |
-| Prolactin | `f32` | normalized | 0.0-1.0 | `horm.prolactin` | Post-ejac spike |
+| Prolactin | `f32` | multiplier | 0.0-4.0 | `horm.prolactin` | 1.0=baseline, 4.0=400% spike post-ejac, decays ~2 weeks |
 | Retention days | `u16` | days | 0-365 | `horm.retention_days` | Since ejaculation |
 | Serotonin | `f32` | normalized | 0.0-1.0 | `horm.serotonin` | Mood, satiety |
 | Melatonin | `f32` | normalized | 0.0-1.0 | `horm.melatonin` | Sleep pressure |
@@ -237,10 +242,18 @@ Flat index of ALL variables in the simulation. This is the **Single Source of Tr
 
 | Variable | Type | Unit | Range | Rust Path | Notes |
 |----------|------|------|-------|-----------|-------|
-| Gamma | `f32` | exponent | 1.0-5.0 | `attn.gamma` | Motivation curve |
+| Gamma | `f32` | exponent | 1.0-5.0 | `attn.gamma` | Motivation curve - ADHD: 2.5-4.0 |
 | Flow state | `bool` | - | - | `attn.in_flow` | Currently in flow |
 | Activation energy | `f32` | normalized | 0.0-1.0 | `attn.activation_energy` | Task start threshold |
 | Focus duration | `f32` | minutes | 0-180 | `attn.focus_duration` | Sustained capacity |
+| Exploration drive | `f32` | normalized | 0.0-1.0 | `attn.exploration` | Novelty-seeking - ADHD: naturally high |
+| Exploitation capacity | `f32` | normalized | 0.0-1.0 | `attn.exploitation` | Ability to extract value from known path |
+| Current mode | `enum` | - | exploring/exploiting/stuck | `attn.mode` | Current cognitive strategy |
+| Discount rate | `f32` | normalized | 0.0-1.0 | `attn.discount_rate` | Present bias - higher = more impulsive |
+| Time horizon | `f32` | hours | 0-∞ | `attn.time_horizon` | How far ahead planning |
+| Social capacity | `f32` | normalized | 0.0-1.0 | `attn.social_capacity` | FIRST to degrade when tired |
+| Executive function | `f32` | normalized | 0.0-1.0 | `attn.executive_function` | System 2 capacity |
+| Motor precision | `f32` | normalized | 0.0-1.0 | `attn.motor_precision` | LAST to degrade when tired |
 
 ---
 

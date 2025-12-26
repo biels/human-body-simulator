@@ -198,6 +198,81 @@ fn branch(timeline: &Timeline, from_tick: u64) -> Timeline {
 
 ---
 
+## System Interactions (Non-Obvious Connections)
+
+These cross-system effects emerge from the simulation but aren't obvious from individual systems.
+
+### Retention + Keto = Redundant
+```
+Both suppress appetite through overlapping pathways:
+- Both increase sympathetic tone
+- Both reduce dopamine spikes (stable energy)
+- Keto makes retention EASIER (suppresses urges)
+
+BUT: Keto DURING stable retention removes energy
+- Pick ONE as primary
+- Optimal: Keto to ENTER retention → carbs once stable
+```
+
+### Dopamine → Immune System
+```
+Immune cells have dopamine receptors.
+ADHD = more pronounced effect.
+
+Observation on retention:
+- WITH: No sicknesses, virus stays "on surface"
+- WITHOUT: Sick every ~3 weeks
+
+Keto also improves immunity (via inflammation reduction).
+```
+
+### Retention → Sleep Reduction
+```
+WHY less sleep needed:
+- Orexin/hypocretin upregulation (same as keto)
+- More efficient glymphatic clearing
+- Less neural waste production
+- Better dopamine = less recovery needed
+
+This is REAL reduced need, not forced wakefulness.
+Mechanism: Different temporal niche when not in "mating mode"
+```
+
+### Coordination Enhancement (Retention)
+```
+Observable effects on retention:
+- Catch things normally dropped
+- Navigate crowds smoothly
+- Type faster with fewer errors
+- Feel weight of objects precisely
+- Move with deliberate intention
+
+WHY:
+- Dopamine controls motor precision
+- Higher dopamine = finer motor control
+- Testosterone enhances proprioception
+- Cerebellum processing speed increases
+```
+
+### Keto vs Carbs for Different Modes
+```
+KETO better for:
+- Business meetings
+- Deep work sessions
+- Structured tasks
+- Tunnel focus
+
+CARBS better for:
+- Meeting friends
+- Spontaneous social
+- Parties
+- Quick social bursts
+
+Trade-off: Keto reduces social reactivity (good for anxiety, bad for spontaneity)
+```
+
+---
+
 ## File Map
 
 | Spec File | Rust Module | Purpose |
@@ -206,5 +281,5 @@ fn branch(timeline: &Timeline, from_tick: u64) -> Timeline {
 | `01_ENGINE_CORE.md` | `src/systems/{renal,respiratory,metabolic}.rs` | Homeostatic machinery |
 | `02_CONTROLLERS.md` | `src/systems/{circadian,hormonal,autonomic}.rs` | Regulatory systems |
 | `03_ACTIVITIES.md` | `src/activities.rs`, `src/environment.rs` | Input layer |
-| `04_DIMENSIONS.md` | `src/dimensions.rs` | Output/UX layer |
+| `04_AXES.md` | `src/axes.rs` | Output/UX layer - 7 physiological axes |
 | `DATA_DICTIONARY.md` | `src/state.rs` | All variable definitions |

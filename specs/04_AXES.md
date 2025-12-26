@@ -67,40 +67,85 @@ struct Androgenic {
 
 **What you feel:** Content vs seeking, patient vs impulsive, exploiting vs exploring
 
-**Pathway:** Dopamine baseline (tonic) → affects reward threshold
+**Pathway:** Dopamine baseline (tonic) → receptor binding → affects reward threshold
 
 ```rust
 struct Dopaminergic {
-    baseline: f32,        // Tonic level (0.0-1.0)
-    seeking: f32,         // Inverse of baseline - how much you're hunting
+    effective_level: f32, // What you actually experience (0.0-1.0)
+    baseline: f32,        // Tonic production level (0.0-1.0)
+    receptor_density: f32, // Number of D2 receptors (downregulates with overuse)
+    receptor_sensitivity: f32, // How responsive each receptor is
+    reuptake_rate: f32,   // DAT activity - ADHD: often high (clears too fast)
+    seeking: f32,         // Inverse of effective - how much you're hunting
     time_preference: f32, // -1.0 (present bias) to 1.0 (future bias)
 }
 ```
 
+**The ADHD insight (Reuptake/DAT):**
+```
+EFFECTIVE DOPAMINE = baseline × receptor_density × sensitivity / reuptake_rate
+
+ADHD typically has:
+- Normal or low baseline
+- Normal receptor density
+- HIGH REUPTAKE RATE (DAT hyperactivity)
+  → Dopamine clears synapse too fast
+  → Need constant hits to maintain any level
+  → Explains why stimulants (DAT blockers) help
+
+This is why:
+- Same dopamine input → ADHD feels less
+- Need "Level 10" stimulation to feel "Level 5" effect
+- Boredom is PAINFUL (dopamine crashes to zero)
+- Hyperfocus on interesting = finally enough dopamine
+```
+
 **The key insight:**
-- **LOW baseline** = hungry for dopamine, seeking, distractible, present-biased
-- **HIGH baseline** = content, patient, can exploit current task, future-oriented
+- **LOW effective** = hungry for dopamine, seeking, distractible, present-biased
+- **HIGH effective** = content, patient, can exploit current task, future-oriented
 
 **Key variables:**
-- `horm.dopamine_baseline`
-- `horm.prolactin` (crashes dopamine)
-- `attn.gamma` (individual's curve steepness)
+- `horm.dopamine_baseline` (production)
+- `horm.receptor_density` (how many receptors)
+- `horm.receptor_sensitivity` (how responsive)
+- `horm.dopamine_reuptake` (DAT - how fast it clears)
+- `horm.prolactin` (antagonizes dopamine)
+- `attn.gamma` (individual's motivation curve steepness)
+
+**Receptor dynamics:**
+| Mechanism | Speed | Effect |
+|-----------|-------|--------|
+| Sensitivity | Days | Upregulates with abstinence, peaks day 4-6 |
+| Density | Weeks | Downregulates with chronic overstimulation |
+| Reuptake | Trait | Mostly genetic, modifiable with stimulants |
 
 **Modulators:**
-| Raises Baseline | Lowers Baseline |
-|-----------------|-----------------|
-| Retention (sustained) | Ejaculation |
-| Cold exposure (+250%) | Porn/superstimuli |
+| Raises Effective | Lowers Effective |
+|------------------|------------------|
+| Retention (sustained) | Ejaculation (prolactin surge) |
+| Cold exposure (+250%) | Porn/superstimuli (density crash) |
 | NSDR (+65%) | Social media binges |
 | Achieving goals | Chronic novelty-seeking |
 | Sunlight | Sleep deprivation |
+| Abstinence 4-6 days (sensitivity ↑) | Frequent rewards (density ↓) |
 
 **Subjective states:**
-| Baseline | Seeking | You Feel |
-|----------|---------|----------|
-| Low | High | "Need stimulation", scrolling, restless |
-| Medium | Medium | Normal, can work with effort |
-| High | Low | Content, focused, patient, "in the zone" |
+| Effective | Seeking | You Feel |
+|-----------|---------|----------|
+| Low | High | "Need stimulation", scrolling, restless, impulsive |
+| Medium | Medium | Normal, can work with effort, some distractibility |
+| High | Low | Content, focused, patient, "in the zone", future-oriented |
+
+**Exploration vs Exploitation:**
+```
+Low dopamine  → HIGH exploration (seeking novelty)
+              → LOW exploitation (can't stick with known path)
+              → "Puer Aeternus" pattern (can't commit)
+
+High dopamine → LOW exploration (content)
+              → HIGH exploitation (can extract value from current path)
+              → "Completion mode" activated
+```
 
 **Time preference:**
 ```
@@ -441,11 +486,17 @@ impl AxisSnapshot {
     }
 
     fn calc_dopaminergic(s: &BodyState) -> f32 {
-        // Higher = more content, lower = more seeking
-        let baseline = s.horm.dopamine_baseline;
-        let prolactin_crash = s.horm.prolactin * 0.5;
+        // EFFECTIVE dopamine = what you actually experience
+        // This is the key formula for ADHD modeling
+        let effective = s.horm.dopamine_baseline
+            * s.horm.receptor_density
+            * s.horm.receptor_sensitivity
+            / s.horm.dopamine_reuptake.max(0.5);
 
-        (baseline - prolactin_crash).clamp(0.0, 1.0)
+        // Prolactin antagonizes dopamine signaling
+        let prolactin_penalty = (s.horm.prolactin - 1.0).max(0.0) * 0.3;
+
+        (effective - prolactin_penalty).clamp(0.0, 1.0)
     }
 
     fn calc_adenosinergic(s: &BodyState) -> f32 {
