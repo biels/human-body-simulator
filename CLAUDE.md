@@ -11,7 +11,7 @@ A discrete-event physiological simulator with branching timelines. Simulate "how
 ## Key Concepts
 - **Activities** are the only input (eat, sleep, exercise, cold plunge)
 - **Systems** process inputs and maintain homeostasis
-- **Axes** are the output - 7 felt physiological pathways:
+- **Axes** are "how do I feel" - 7 felt physiological pathways:
   1. Androgenic (retention/testosterone)
   2. Dopaminergic (content vs seeking)
   3. Metabolic (keto vs glycolytic)
@@ -19,6 +19,12 @@ A discrete-event physiological simulator with branching timelines. Simulate "how
   5. Autonomic (calm vs stressed)
   6. Immune (resilient vs run down)
   7. Thermoregulatory (cold tolerance)
+- **Goals** are "what can I do well" - functional outcomes:
+  - Cognitive: Focus, Executive Function, Learning, Creativity
+  - Social: Energy, Spontaneity, Presence, Flirting
+  - Physical: Strength, Endurance, Coordination, Recovery
+  - Emotional: Drive, Mood, Stress Resilience
+- Goals derive from axes but capture trade-offs (can't optimize all simultaneously)
 - User never sets internal state directly—must do activities that trigger it
 
 ## Sources
@@ -33,7 +39,8 @@ A discrete-event physiological simulator with branching timelines. Simulate "how
 - `specs/01_ENGINE_CORE.md` - Homeostatic machinery
 - `specs/02_CONTROLLERS.md` - Regulatory systems
 - `specs/03_ACTIVITIES.md` - All activities
-- `specs/04_AXES.md` - 7 physiological axes (the "how do I feel" output)
+- `specs/04_AXES.md` - 7 physiological axes ("how do I feel")
+- `specs/05_GOALS.md` - Optimization targets ("what can I do well")
 
 ## Implementation
 - Language: Rust (for immutability, ECS pattern)

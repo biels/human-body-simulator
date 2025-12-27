@@ -257,6 +257,62 @@ fn autonomic_tick(state: &mut BodyState) {
 | Walking (optic flow) | ↓sympathetic | Minutes |
 | Cold exposure | Acute ↑symp → rebound ↑para | Minutes-hours |
 
+### Chronic Cortisol Effects (Hippocampal Shrinkage)
+
+```
+CORTISOL + HIPPOCAMPUS - A Dangerous Loop:
+
+The hippocampus (memory center) is RICH in cortisol receptors.
+This makes sense: stress should enhance memory (remember threats).
+
+BUT chronic elevated cortisol → HIPPOCAMPAL ATROPHY:
+- Dendritic pruning (connections lost)
+- Reduced neurogenesis (fewer new neurons)
+- Measurable volume reduction on MRI
+
+THE VICIOUS CYCLE:
+Chronic stress → High cortisol → Hippocampal shrinkage
+    ↓                                    ↓
+Less cortisol regulation ←─────── Hippocampus regulates cortisol
+
+This is why chronic stress causes:
+- Memory problems
+- Difficulty learning
+- Emotional dysregulation
+- Accelerated cognitive aging
+
+GOOD NEWS: Hippocampus can REGROW with:
+- Exercise (one of strongest neurogenesis triggers)
+- Sleep (consolidation + repair)
+- Stress reduction
+- Meditation (measurable volume increases)
+```
+
+### Social Connection Effects
+
+```
+LONELINESS IS A PHYSIOLOGICAL STATE:
+
+The brain interprets social isolation as THREAT:
+- Same circuits as physical danger
+- Activates chronic stress response
+- Elevates baseline cortisol
+
+Loneliness → Chronic cortisol → All downstream effects:
+- Hippocampal shrinkage (memory/learning)
+- Immune suppression
+- Cardiovascular strain
+- Accelerated aging
+
+Study data:
+- Loneliness increases dementia risk by ~50%
+- Social connection is as important as exercise
+- Quality matters more than quantity
+
+This is NOT psychological fluff - it's measurable physiology.
+Social connection literally changes blood chemistry.
+```
+
 ---
 
 ## System: Hormonal
@@ -856,6 +912,37 @@ LOW SKILL ────────────┼──────────�
                 LOW CHALLENGE
 ```
 
+### Cerebellum → Frontal Lobe Activation
+
+```
+COORDINATION EXERCISE ENHANCES COGNITION:
+
+The cerebellum ("little brain") is traditionally viewed as motor-only.
+But it has DENSE connections to the prefrontal cortex.
+
+Coordination exercises → Cerebellar activation → Frontal lobe benefits:
+- Improved working memory
+- Better executive function
+- Enhanced learning rate
+
+HOW TO LEVERAGE:
+1. Complex motor patterns (dance, martial arts)
+2. Novel movement sequences
+3. Balance challenges
+4. Hand-eye coordination tasks
+
+This is why:
+- Learning an instrument improves math
+- Athletes often have good executive function
+- Fidgeting helps some people think
+
+Mechanism:
+Cerebellum → Thalamus → Prefrontal cortex
+
+The motor-cognitive connection is REAL, not metaphorical.
+Physical coordination literally exercises cognitive circuits.
+```
+
 ### Outputs (Modifies)
 | Writes To | Variable | Effect |
 |-----------|----------|--------|
@@ -899,6 +986,110 @@ fn perceptual_tick(state: &mut BodyState) {
 
 ---
 
+## System: Vascular / Nitric Oxide
+
+Blood flow regulation via nitric oxide signaling. Foundation for brain and body function.
+
+### Why Nitric Oxide Matters
+
+```
+NITRIC OXIDE (NO) is the master regulator of blood flow:
+
+Blood flow = Oxygen + Glucose + Hormone delivery
+
+If NO is low → restricted blood flow → EVERYTHING suffers:
+- Brain fog (less oxygen/glucose to neurons)
+- Erectile dysfunction (same mechanism!)
+- High blood pressure (vessels can't dilate)
+- Poor exercise performance
+- Reduced healing
+
+ED is an early warning sign of cardiovascular disease.
+Same vascular dysfunction, different organ.
+```
+
+### State Variables
+| Variable | Rust Path | Notes |
+|----------|-----------|-------|
+| `no_availability` | `vasc.no_availability` | Nitric oxide level (0-1) |
+| `endothelial_health` | `vasc.endothelial_health` | Vessel lining function |
+| `blood_flow_brain` | `vasc.blood_flow_brain` | Cerebral perfusion |
+| `blood_flow_muscle` | `vasc.blood_flow_muscle` | Muscle perfusion |
+
+### Nitric Oxide Production Pathways
+
+```
+TWO PATHWAYS TO NO:
+
+1. L-ARGININE PATHWAY (enzymatic):
+   L-Arginine → (eNOS enzyme) → Nitric Oxide
+   - Requires: oxygen, BH4 cofactor, healthy endothelium
+   - DECLINES with age (eNOS efficiency drops)
+
+2. NITRATE-NITRITE-NO PATHWAY (dietary):
+   Dietary Nitrates → Oral Bacteria convert → Nitrite → NO
+   - Independent of eNOS
+   - Can compensate for aging
+   - KILLED by: mouthwash, antacids (destroy oral bacteria)
+
+Key insight: Mouthwash DESTROYS the oral bacteria that convert
+nitrates to nitrites. Using mouthwash can RAISE blood pressure
+by 2-6 mmHg within hours.
+```
+
+### Nitric Oxide Logic
+
+```rust
+fn vascular_tick(state: &mut BodyState) {
+    // PATHWAY 1: eNOS (declines with age)
+    let age_factor = 1.0 - (state.age as f32 - 25.0).max(0.0) / 100.0;
+    let enos_production = age_factor * state.vasc.endothelial_health * 0.5;
+
+    // PATHWAY 2: Dietary nitrate-nitrite-NO
+    let dietary_no = state.vasc.dietary_nitrate * state.vasc.oral_bacteria;
+
+    // Total NO availability
+    state.vasc.no_availability = (enos_production + dietary_no).clamp(0.0, 1.0);
+
+    // BLOOD FLOW depends on NO
+    state.vasc.blood_flow_brain = 0.3 + state.vasc.no_availability * 0.7;
+    state.vasc.blood_flow_muscle = 0.2 + state.vasc.no_availability * 0.8;
+
+    // ENDOTHELIAL HEALTH
+    // Damaged by: high glucose, chronic inflammation, oxidative stress
+    if state.meta.glucose > 140.0 {
+        state.vasc.endothelial_health *= 0.999;
+    }
+
+    // Mouthwash effect (kills oral bacteria)
+    // state.vasc.oral_bacteria *= 0.3 when mouthwash used
+
+    // Exercise improves NO (shear stress on vessels)
+    // (handled in activity processing)
+}
+```
+
+### NO Boosters
+
+| Intervention | Mechanism | Effect Duration |
+|--------------|-----------|-----------------|
+| Beet juice / leafy greens | Dietary nitrates | 2-3 hours |
+| Exercise | Shear stress → eNOS | During + hours after |
+| Sunlight on skin | UV releases NO stores | Hours |
+| Nasal breathing | Sinus NO production | Continuous |
+| Dark chocolate | Flavanols → eNOS | Hours |
+
+### NO Destroyers
+
+| Factor | Mechanism | Recovery |
+|--------|-----------|----------|
+| Mouthwash | Kills oral bacteria | 24-48 hours |
+| Antacids | Reduces nitrite conversion | Hours |
+| High sugar | Endothelial damage | Chronic |
+| Smoking | Oxidative stress | Days-weeks |
+
+---
+
 ## System: Memory & Learning
 
 Neuroplasticity, encoding strength, and the "commit during sleep" model.
@@ -920,9 +1111,69 @@ LEARNING = ENCODING (awake) + CONSOLIDATION (sleep)
    - SWS (deep sleep): Declarative memories → cortex
    - REM: Procedural/emotional integration
    - Clears uncommitted_load, makes memories permanent
+   - GLYMPHATIC SYSTEM clears metabolic waste (see below)
 
    IF sleep skipped → uncommitted traces lost
    This is why "sleep on it" works
+```
+
+### Glymphatic System (Brain Cleaning)
+
+```
+THE GLYMPHATIC SYSTEM - Brain's waste removal:
+
+DURING SLEEP (especially deep sleep):
+- Brain cells SHRINK by ~60%
+- CSF (cerebrospinal fluid) floods through gaps
+- Flushes out metabolic waste:
+  - Beta-amyloid (Alzheimer's protein)
+  - Tau proteins
+  - Other neurotoxic waste
+
+GLYMPHATIC FLOW IS 10x HIGHER DURING SLEEP
+
+This is why chronic sleep deprivation → dementia risk:
+- Waste accumulates faster than cleared
+- Beta-amyloid builds up
+- Neurons die
+
+Position matters:
+- Side sleeping → best glymphatic flow
+- Back sleeping → second best
+- Stomach sleeping → least optimal
+
+Alcohol SUPPRESSES glymphatic flow even if you "sleep"
+```
+
+### Age 25 Neuroplasticity Threshold
+
+```
+THE 25-YEAR THRESHOLD:
+
+Before age ~25:
+- Brain is in "learning mode"
+- Neuroplasticity is HIGH by default
+- Normal experiences create lasting changes
+- Less effort needed for adaptation
+
+After age ~25:
+- Prefrontal cortex fully myelinated
+- Brain shifts to "optimization mode"
+- Neuroplasticity requires STRONGER signals:
+  - Intense focus
+  - Novelty + challenge
+  - High BDNF (exercise, fasting)
+  - Emotional salience
+
+This is NOT a hard cutoff - plasticity continues lifelong.
+But the THRESHOLD for triggering it increases.
+
+Interventions that LOWER the threshold after 25:
+- Exercise (↑BDNF)
+- Deliberate practice
+- Novel challenging tasks
+- Cold exposure
+- Fasting
 
 THE FORGETTING CURVE:
    - Lose ~50% in first hour if not consolidated

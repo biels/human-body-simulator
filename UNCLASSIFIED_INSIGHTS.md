@@ -222,6 +222,103 @@ omega_3_for_attention:
   mechanism: EPA reduces inflammatory cytokines that inhibit serotonin/dopamine
 ```
 
+### Creatine for Brain Function
+
+```yaml
+context:
+  - Creatine is NOT just for muscles
+  - Brain is highly metabolically active
+  - Creatine buffers ATP for rapid energy demands
+
+dosing:
+  muscle_saturation: 5g/day  # Standard athletic dose
+  brain_saturation: 10-20g/day  # HIGHER dose reaches brain
+
+  why_higher:
+    - Blood-brain barrier limits transport
+    - Brain creatine stores are INDEPENDENT of muscle stores
+    - 5g saturates muscles but NOT brain
+
+sleep_deprivation_study:
+  dose: 25-30g (loading dose)
+  result: Nearly NEGATED cognitive deficits from sleep loss
+  mechanism: Creatine provides emergency ATP for depleted neurons
+  note: This is acute intervention, not daily protocol
+
+brain_benefits:
+  - Working memory improvement
+  - Reduced mental fatigue
+  - Neuroprotection (TBI, concussion)
+  - May help depression (preliminary)
+  - Vegetarians show MORE benefit (diet lower in creatine)
+
+protocol:
+  maintenance: 5g/day (muscle + some brain)
+  cognitive_focus: 10g/day split into 2 doses
+  acute_sleep_rescue: 20-30g (one-time, expect GI issues)
+
+forms:
+  creatine_monohydrate: Best studied, cheapest, works
+  other_forms: No proven advantage despite marketing
+```
+
+### Neurovascular Plant Compounds
+
+```yaml
+context:
+  - The "neurovascular unit" = neurons + blood vessels + support cells
+  - Brain function depends on blood flow (oxygen, glucose)
+  - Plant polyphenols support vascular health → brain health
+
+green_tea:
+  compounds:
+    - EGCG (epigallocatechin gallate)
+    - L-theanine (calm focus)
+  effects:
+    - ↑BDNF (neuroplasticity)
+    - ↑Nitric oxide (blood flow)
+    - ↓Oxidative stress
+    - Synergy with caffeine (L-theanine smooths jitters)
+  dose: 2-3 cups/day or 500mg EGCG extract
+
+dark_chocolate:
+  requirements:
+    - Must be 75%+ cacao (milk chocolate doesn't count)
+    - Higher % = more flavanols, less sugar
+  effects:
+    - ↑Nitric oxide → cerebral blood flow
+    - ↑BDNF
+    - Mood improvement (theobromine, phenylethylamine)
+  dose: 20-30g daily (small square)
+  warning: Still caloric, easy to overeat
+
+rosemary:
+  compounds:
+    - Carnosic acid
+    - Rosmarinic acid
+  effects:
+    - Improved memory recall (aroma alone shows effects)
+    - Acetylcholinesterase inhibition (similar mechanism to some Alzheimer's drugs)
+    - Neuroprotection
+  dose: Fresh herb in cooking, or 500mg extract
+  aroma_study: Just SMELLING rosemary improved cognitive performance
+
+berries:
+  compounds:
+    - Anthocyanins (blue/purple pigments)
+  effects:
+    - Cross blood-brain barrier
+    - ↓Neuroinflammation
+    - ↑Neuroplasticity
+  best: Blueberries, blackberries, dark grapes
+  dose: 1 cup daily
+
+general_principle: |
+  Plant pigments (what makes them colorful) often have
+  neuroprotective effects. Eat the rainbow, especially
+  dark colors: purple, blue, dark green, deep red.
+```
+
 ### Testosterone Optimization Protocol
 
 ```yaml
@@ -542,6 +639,12 @@ Some individuals operate binary rather than gradient:
 - NSDR Portal
 - Guest Series: Dr. Matt Walker on Sleep Protocols
 - Guest Series: Dr. Susanna Soberg on Cold & Heat Exposure
+
+### The Diary Of A CEO
+
+- "THIS Is The Fastest Way To Get Dementia...The 6 Science-Backed Brain Fixes!" (https://www.youtube.com/watch?v=Oipkl53n938)
+  - Experts: Andrew Huberman, Dr. Rhonda Patrick, Dr. Wendy Suzuki, Dr. Nathan Bryan, Dr. Daniel Amen
+  - Topics: Exercise/brain, creatine brain dosing, nitric oxide, glymphatic system, coordination/cerebellum
 
 ### What I've Learned (Joseph Everett)
 

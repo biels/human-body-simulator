@@ -282,6 +282,7 @@ Trade-off: Keto reduces social reactivity (good for anxiety, bad for spontaneity
 | `02_CONTROLLERS.md` | `src/systems/{circadian,hormonal,autonomic}.rs` | Regulatory systems |
 | `03_ACTIVITIES.md` | `src/activities.rs`, `src/environment.rs` | Input layer |
 | `04_AXES.md` | `src/axes.rs` | Output/UX layer - 7 physiological axes |
+| `05_GOALS.md` | `src/goals.rs` | **Optimization targets - what you can DO well** |
 | `06_ZONES.md` | `src/zones/*.rs` | **Physical compartments and mass flow** |
 | `DATA_DICTIONARY.md` | `src/state.rs` | All variable definitions |
 
